@@ -1,0 +1,16 @@
+[paths]
+source =
+   src/timetree
+   */site-packages/timetree
+
+[run]
+branch = true
+source =
+    timetree
+    tests
+parallel = true
+
+[report]
+show_missing = true
+precision = 2
+omit = *migrations*
