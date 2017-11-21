@@ -8,7 +8,11 @@ to full to confluent persistence.
 """
 
 from .base import BaseBackend
+from .copy import CopyBackend
+from .nop import NOPBackend
 
 __all__ = [
     'BaseBackend',
+    'CopyBackend',
+    'NOPBackend',
 ]
