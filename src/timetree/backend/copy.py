@@ -1,5 +1,8 @@
-from .base import BaseBackend, BaseVersion, BaseVnode
 from collections import defaultdict
+
+from .base import BaseBackend
+from .base import BaseVersion
+from .base import BaseVnode
 
 
 class CopyBackend(BaseBackend):
@@ -11,13 +14,13 @@ class CopyBackend(BaseBackend):
     def __init__(self):
         super().__init__()
 
-    def commit(self, vnodes):
+    def commit(self, vnodes=None):
         vnodes = super().commit(vnodes)
 
         commit = CopyVersion(self, is_head=False)
         return commit, self._clone(vnodes, commit)
 
-    def branch(self, vnodes):
+    def branch(self, vnodes=None):
         vnodes = super().branch(vnodes)
 
         head = CopyVersion(self, is_head=True)

@@ -3,12 +3,22 @@ import pytest
 import timetree
 
 
-class A(object, metaclass=timetree.Persistent):
+@timetree.make_persistent
+class A(object):
     pass
 
 
 def test_main():
     dir(timetree)
+
+
+def test_frontend():
+    a = A(timetree_backend=timetree.backend.NopBackend())
+    a.foo = 1
+    assert a.foo == 1
+    assert timetree.frontend.get_vnode(a).get('foo') == 1
+    timetree.frontend.get_vnode(a).set('bar', 2)
+    assert a.bar == 2
 
 
 def test_nop_backend():

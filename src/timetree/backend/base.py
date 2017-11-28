@@ -1,6 +1,8 @@
 from abc import ABCMeta
 from abc import abstractmethod
 
+__all__ = ['BaseBackend', 'BaseVersion', 'BaseVnode']
+
 
 class BaseBackend(metaclass=ABCMeta):
     """ Abstract base class for persistence backends
@@ -69,7 +71,7 @@ class BaseBackend(metaclass=ABCMeta):
         :param value: The value to check
         :return: True if it is a vnode
         """
-        return getattr(value, 'backend', None) is self
+        return isinstance(value, BaseVnode) and value.backend is self
 
     @abstractmethod
     def commit(self, vnodes=None):
@@ -138,13 +140,10 @@ class BaseBackend(metaclass=ABCMeta):
 
 class BaseVersion(metaclass=ABCMeta):
     """ Abstract base class for versions of backends """
-
     __slots__ = ()
 
-    @property
-    def backend(self):
-        """ Return the backend of this vnode """
-        raise NotImplementedError()
+    # self.backend is the backend
+    backend = None
 
     @abstractmethod
     def new_node(self):
@@ -178,15 +177,13 @@ class BaseVnode(metaclass=ABCMeta):
     """ Abstract base class for vnodes of backends """
     __slots__ = ()
 
+    # self.version is the version
+    version = None
+
     @property
     def backend(self):
         """ Return the backend of this vnode """
         return self.version.backend
-
-    @property
-    def version(self):
-        """ Return the version of this vnode """
-        raise NotImplementedError()
 
     @abstractmethod
     def get(self, field):
