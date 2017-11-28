@@ -12,10 +12,6 @@ class NopBackend(BaseBackend):
         super().__init__()
         self.head = None
 
-    def is_vnode(self, value):
-        super().is_vnode(value)
-        return isinstance(value, NopVnode)
-
     def commit(self, vnodes):
         """Commit is an illegal operation"""
         vnodes = super().commit(vnodes)
@@ -36,20 +32,16 @@ class NopBackend(BaseBackend):
 
 class NopVersion(BaseVersion):
     """ Only exists as a head """
-    __slots__ = ('backend',)
+    __slots__ = ('backend', 'is_head')
 
     def __init__(self, backend):
         super().__init__()
         self.backend = backend
+        self.is_head = True
 
     def new_node(self):
         super().new_node()
         return NopVnode(self)
-
-    @property
-    def is_head(self):
-        super().is_head
-        return True
 
 
 class NopVnode(BaseVnode):

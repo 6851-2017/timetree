@@ -1,4 +1,5 @@
-from .base import BaseBackend
+from .base import BaseBackend, BaseVersion, BaseVnode
+from collections import defaultdict
 
 
 class CopyBackend(BaseBackend):
@@ -8,90 +9,19 @@ class CopyBackend(BaseBackend):
     """
 
     def __init__(self):
+        super().__init__()
 
-        class Version:
-            def __init__(self):
-                self.vnodes = []
+    def commit(self, vnodes):
+        vnodes = super().commit(vnodes)
 
-        class Commit(Version):
-            def __init__(self):
-                super().__init__()
+        commit = CopyVersion(self, is_head=False)
+        return commit, self._clone(vnodes, commit)
 
-        class Head(Version):
-            def __init__(self):
-                super().__init__()
+    def branch(self, vnodes):
+        vnodes = super().branch(vnodes)
 
-        class VNode:
-            def __init__(self, version):
-                self.version = version
-                self.values = dict()
-
-        self.Head = Head
-        self.Commit = Commit
-        self.Version = Version
-        self.VNode = VNode
-
-        self.base_commit = Commit()
-
-    def get_base_commit(self):
-        """ Get the base commit, on which we can build new versions
-
-        :return: An identifier for the base commit
-        """
-        return self.base_commit
-
-    def new_node(self, head):
-        """ Create a new vnode in the specific head
-
-        :param version: The current version object
-        :return: A new vnode in the current version
-        """
-        super().new_node(head)
-        vnode = self.VNode(head)
-        head.vnodes.append(vnode)
-        return vnode
-
-    def get(self, vnode, field):
-        """ Get a field of a vnode
-
-        :param vnode: Vnode to access
-        :param field: Field name
-        :return: Field value
-        :raises KeyError: Field not found in vnode
-        """
-        super().get(vnode, field)
-        if field not in vnode.values:
-            raise KeyError
-        return vnode.values[field]
-
-    def _is_vnode(self, value):
-        return isinstance(value, self.VNode)
-
-    def set(self, vnode, field, value):
-        """ Set a field of a vnode
-
-        :param vnode: Vnode to modify
-        :param field: Field name
-        :param value: New value to set
-            Must be in the same version if it's also a vnode.
-        :return: None
-        :raises ValueError: Value is a vnode but isn't at the same version
-        """
-        super().set(vnode, field, value)
-        vnode.values[field] = value
-
-    def delete(self, vnode, field):
-        """ Delete a field of a vnode
-
-        :param vnode: Vnode to delete from
-        :param field: Field name
-        :return: None
-        :raises KeyError: Field not found in vnode
-        """
-        super().delete(vnode, field)
-        if field not in vnode.values:
-            raise KeyError
-        del vnode.values[field]
+        head = CopyVersion(self, is_head=True)
+        return head, self._clone(vnodes, head)
 
     def _clone(self, vnodes, version):
         """ Clone vnodes under a new version
@@ -100,50 +30,58 @@ class CopyBackend(BaseBackend):
         :param version: New version
         :return: Mapping of vnodes
         """
-        node_map = {vnode: self.VNode(version) for vnode in vnodes}
-        for vnode, new_vnode in node_map.items():
-            # Write in the new values
-            new_vnode.values = {
-                k: node_map[v] if self._is_vnode(v) else v
-                for k, v in vnode.values.items()
-            }
-        return node_map
+        vnodes_by_version = defaultdict(set)
+        for vnode in vnodes:
+            vnodes_by_version[vnode.version].add(vnode)
 
-    def commit(self, head, vnodes):
-        """Commit is an illegal operation"""
-        head, vnodes = super().commit(head, vnodes)
+        node_maps = dict()
+        for _version, _vnodes in vnodes_by_version.items():
+            node_map = {vnode: CopyVnode(version) for vnode in _vnodes}
+            for vnode, new_vnode in node_map.items():
+                # Write in the new values
+                new_vnode.values = {
+                    k: node_map[v] if self.is_vnode(v) else v
+                    for k, v in vnode.values.items()
+                }
+            node_maps[_version] = node_map
+        return [node_maps[vnode.version][vnode] for vnode in vnodes]
 
-        commit = self.Commit()
-        node_map = self._clone(head.vnodes, commit)
-        return commit, [node_map[vnode] for vnode in vnodes]
 
-    def branch(self, commit, vnodes, *args):
-        """ Branch only once from the empty commit """
-        sources = super().branch(commit, vnodes, *args)
+class CopyVersion(BaseVersion):
+    __slots__ = ('backend', 'is_head', 'vnodes')
 
-        head = self.Head()
+    def __init__(self, backend, is_head):
+        super().__init__()
+        self.backend = backend
+        self.is_head = is_head
+        self.vnodes = []
 
-        result = []
-        for commit, vnodes in sources:
-            node_map = self._clone(commit.vnodes, head)
-            result.append([node_map[vnode] for vnode in vnodes])
+    def new_node(self):
+        super().new_node()
+        vnode = CopyVnode(self)
+        self.vnodes.append(vnode)
+        return vnode
 
-        return head, result
 
-    def get_version(self, vnode):
-        """ Get the version of a vnode
+class CopyVnode(BaseVnode):
+    __slots__ = ('version', 'values')
 
-        :param vnode: Vnode to query
-        :return: Version of the vnode
-        """
-        super().get_version(vnode)
-        return vnode.version
+    def __init__(self, version):
+        self.version = version
+        self.values = dict()
 
-    def is_head(self, version):
-        """ Returns whether a version is a head or a commit
+    def get(self, field):
+        super().get(field)
+        if field not in self.values:
+            raise KeyError
+        return self.values[field]
 
-        :param version: Version to query
-        :return: Boolean of True if it's a head and otherwise False
-        """
-        super().is_head(version)
-        return isinstance(version, self.Head)
+    def set(self, field, value):
+        super().set(field, value)
+        self.values[field] = value
+
+    def delete(self, field):
+        super().delete(field)
+        if field not in self.values:
+            raise KeyError
+        del self.values[field]

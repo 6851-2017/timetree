@@ -63,13 +63,13 @@ class BaseBackend(metaclass=ABCMeta):
 
     __slots__ = ()
 
-    @abstractmethod
     def is_vnode(self, value):
         """ Check if a value is a vnode of this backend
 
         :param value: The value to check
         :return: True if it is a vnode
         """
+        return getattr(value, 'backend', None) is self
 
     @abstractmethod
     def commit(self, vnodes=None):
@@ -102,7 +102,7 @@ class BaseBackend(metaclass=ABCMeta):
             head = vnodes[0].version
             if not all(vnode.version == head for vnode in vnodes):
                 raise ValueError('Vnodes must all have the same version')
-            if not head.version.is_head:
+            if not head.is_head:
                 raise ValueError('Vnode version not a head')
 
         return vnodes
@@ -158,12 +158,12 @@ class BaseVersion(metaclass=ABCMeta):
             raise ValueError("Can only create in head versions")
 
     @property
-    @abstractmethod
     def is_head(self):
         """ Returns whether a version is a head or a commit
 
         :return: Boolean of True if it's a head and otherwise False
         """
+        raise NotImplementedError()
 
     @property
     def is_commit(self):
