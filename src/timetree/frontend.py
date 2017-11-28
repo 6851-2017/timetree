@@ -4,6 +4,8 @@ from functools import wraps
 
 from .backend.base import BaseVersion
 
+__all__ = ['use_version', 'make_persistent', 'branch', 'commit']
+
 global_version = None
 
 

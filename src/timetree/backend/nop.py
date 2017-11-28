@@ -1,4 +1,6 @@
-from .base import BaseBackend, BaseVersion, BaseVnode
+from .base import BaseBackend
+from .base import BaseVersion
+from .base import BaseVnode
 
 
 class NopBackend(BaseBackend):

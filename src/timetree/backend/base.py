@@ -1,6 +1,8 @@
 from abc import ABCMeta
 from abc import abstractmethod
 
+__all__ = ['BaseBackend', 'BaseVersion', 'BaseVnode']
+
 
 class BaseBackend(metaclass=ABCMeta):
     """ Abstract base class for persistence backends
