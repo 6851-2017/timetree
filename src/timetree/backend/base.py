@@ -72,7 +72,7 @@ class BaseBackend(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def commit(self, vnodes):
+    def commit(self, vnodes=None):
         """ Create a new commit based on the given head
 
         In different views, this can be:
@@ -82,12 +82,19 @@ class BaseBackend(metaclass=ABCMeta):
             and implicitly rebind all references to head to the new head.
             - Add a copy of head as a commit to the pool of commits.
 
-        If vnodes is empty, then the new commit is the base commit.
+        If vnodes is empty or not given, then the new commit is the base commit.
 
         :param vnodes: Vnodes which we would like references to; must be
         bound to the same head
         :return: Reference to the new commit, a list of `vnodes` rebound to it
         """
+        # The default implementation sanitize vnodes into a list and
+        # validates things
+        if vnodes is None:
+            vnodes = []
+        else:
+            vnodes = list(vnodes)
+
         if not all(self.is_vnode(vnode) for vnode in vnodes):
             raise ValueError('Invalid vnode in commit')
 
@@ -98,8 +105,10 @@ class BaseBackend(metaclass=ABCMeta):
             if not head.version.is_head:
                 raise ValueError('Vnode version not a head')
 
+        return vnodes
+
     @abstractmethod
-    def branch(self, vnodes):
+    def branch(self, vnodes=None):
         """ Create a new head based on the given vnodes
 
         The head's pointer machine is the disjoint union of the pointer
@@ -111,12 +120,20 @@ class BaseBackend(metaclass=ABCMeta):
         bound to commits
         :return: Reference to the new head and a list of `vnodes` rebound to it
         """
-        # The default implementation verifies arguments
+        # The default implementation sanitize vnodes into a list and
+        # validates things
+        if vnodes is None:
+            vnodes = []
+        else:
+            vnodes = list(vnodes)
+
         if not all(self.is_vnode(vnode) for vnode in vnodes):
             raise ValueError('Invalid vnode in branch')
 
         if not all(vnode.version.is_commit for vnode in vnodes):
             raise ValueError('Vnode is not a commit')
+
+        return vnodes
 
 
 class BaseVersion(metaclass=ABCMeta):
