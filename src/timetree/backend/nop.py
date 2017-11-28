@@ -18,14 +18,14 @@ class NopBackend(BaseBackend):
         super().is_vnode(value)
         return isinstance(value, NopVnode)
 
-    def commit(self, vnodes):
+    def commit(self, vnodes=None):
         """Commit is an illegal operation"""
         vnodes = super().commit(vnodes)
         raise NotImplementedError
 
-    def branch(self, vnodes):
+    def branch(self, vnodes=None):
         """ Branch only once from the empty commit """
-        # vnodes = super().branch(vnodes)
+        vnodes = super().branch(vnodes)
 
         if vnodes:
             raise ValueError('NopBackend does not support branching from a commit')
@@ -48,10 +48,8 @@ class NopVersion(BaseVersion):
         super().new_node()
         return NopVnode(self)
 
-    @property
-    def is_head(self):
-        super().is_head
-        return True
+    is_head = True
+    is_commit = False
 
 
 class NopVnode(BaseVnode):

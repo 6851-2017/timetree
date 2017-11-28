@@ -140,13 +140,10 @@ class BaseBackend(metaclass=ABCMeta):
 
 class BaseVersion(metaclass=ABCMeta):
     """ Abstract base class for versions of backends """
-
     __slots__ = ()
 
-    @property
-    def backend(self):
-        """ Return the backend of this vnode """
-        raise NotImplementedError()
+    # self.backend is the backend
+    backend = None
 
     @abstractmethod
     def new_node(self):
@@ -159,36 +156,22 @@ class BaseVersion(metaclass=ABCMeta):
         if not self.is_head:
             raise ValueError("Can only create in head versions")
 
-    @property
-    @abstractmethod
-    def is_head(self):
-        """ Returns whether a version is a head or a commit
-
-        :return: Boolean of True if it's a head and otherwise False
-        """
-
-    @property
-    def is_commit(self):
-        """ Returns whether a version is a commit or a head
-
-        :return: Boolean of True if it's a commit and otherwise False
-        """
-        return not self.is_head
+    # self.is_head and self.is_commit are booleans
+    is_head = False
+    is_commit = False
 
 
 class BaseVnode(metaclass=ABCMeta):
     """ Abstract base class for vnodes of backends """
     __slots__ = ()
 
+    # self.version is the version
+    version = None
+
     @property
     def backend(self):
         """ Return the backend of this vnode """
         return self.version.backend
-
-    @property
-    def version(self):
-        """ Return the version of this vnode """
-        raise NotImplementedError()
 
     @abstractmethod
     def get(self, field):
