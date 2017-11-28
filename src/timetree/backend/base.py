@@ -142,9 +142,9 @@ class BaseVersion(metaclass=ABCMeta):
     __slots__ = ()
 
     @property
-    @abstractmethod
     def backend(self):
         """ Return the backend of this vnode """
+        raise NotImplementedError()
 
     @abstractmethod
     def new_node(self):
@@ -184,9 +184,9 @@ class BaseVnode(metaclass=ABCMeta):
         return self.version.backend
 
     @property
-    @abstractmethod
     def version(self):
         """ Return the version of this vnode """
+        raise NotImplementedError()
 
     @abstractmethod
     def get(self, field):
