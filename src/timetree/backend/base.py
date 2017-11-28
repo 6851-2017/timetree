@@ -64,13 +64,6 @@ class BaseBackend(metaclass=ABCMeta):
     __slots__ = ()
 
     @abstractmethod
-    def get_base_commit(self):
-        """ Get the base commit, on which we can build new versions
-
-        :return: A BaseVersion object corresponding to the commit
-        """
-
-    @abstractmethod
     def is_vnode(self, value):
         """ Check if a value is a vnode of this backend
 
@@ -88,6 +81,8 @@ class BaseBackend(metaclass=ABCMeta):
             - Change the head to a commit, create a new head on top,
             and implicitly rebind all references to head to the new head.
             - Add a copy of head as a commit to the pool of commits.
+
+        If vnodes is empty, then the new commit is the base commit.
 
         :param vnodes: Vnodes which we would like references to; must be
         bound to the same head
@@ -109,6 +104,8 @@ class BaseBackend(metaclass=ABCMeta):
 
         The head's pointer machine is the disjoint union of the pointer
         machines of the originating commits of the given vnodes.
+
+        If vnodes is empty, then create a new branch based off of the base commit.
 
         :param vnodes: Vnodes which we would like references to; must all be
         bound to commits
