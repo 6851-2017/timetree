@@ -156,13 +156,8 @@ class BaseVersion(metaclass=ABCMeta):
         if not self.is_head:
             raise ValueError("Can only create in head versions")
 
-    @property
-    def is_head(self):
-        """ Returns whether a version is a head or a commit
-
-        :return: Boolean of True if it's a head and otherwise False
-        """
-        raise NotImplementedError()
+    # self.is_head is whether the commit is a head
+    is_head = False
 
     @property
     def is_commit(self):

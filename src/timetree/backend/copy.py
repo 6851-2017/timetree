@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from .base import BaseBackend
 from .base import BaseVersion
 from .base import BaseVnode
@@ -33,20 +31,19 @@ class CopyBackend(BaseBackend):
         :param version: New version
         :return: Mapping of vnodes
         """
-        vnodes_by_version = defaultdict(set)
-        for vnode in vnodes:
-            vnodes_by_version[vnode.version].add(vnode)
+        old_versions = {vnode.version for vnode in vnodes}
 
         node_maps = dict()
-        for _version, _vnodes in vnodes_by_version.items():
-            node_map = {vnode: CopyVnode(version) for vnode in _vnodes}
+        for old_version in old_versions:
+            node_map = {vnode: CopyVnode(version) for vnode in old_version.vnodes}
             for vnode, new_vnode in node_map.items():
                 # Write in the new values
                 new_vnode.values = {
                     k: node_map[v] if self.is_vnode(v) else v
                     for k, v in vnode.values.items()
                 }
-            node_maps[_version] = node_map
+            version.vnodes.extend(node_map.values())
+            node_maps[old_version] = node_map
         return [node_maps[vnode.version][vnode] for vnode in vnodes]
 
 
