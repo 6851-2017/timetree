@@ -195,11 +195,13 @@ def _create_version(args, *, is_branch=False, is_commit=False):
     if len(args) == 1 and not isinstance(args[0], TimetreeProxy):
         # We were given an iterator
         is_iterator = True
+        if not hasattr(args[0], '__iter__'):
+            raise TypeError("Only argument was neither a TimetreeProxy nor an iterator")
         args = tuple(args[0])
     else:
         is_iterator = False
 
-    _, vnodes = make_version(args)
+    _, vnodes = make_version(get_vnode(proxy) for proxy in args)
     vnodes = (get_proxy(vnode) for vnode in vnodes)
     if is_iterator:
         return list(vnodes)
