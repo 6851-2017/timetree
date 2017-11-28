@@ -65,13 +65,13 @@ class BaseBackend(metaclass=ABCMeta):
 
     __slots__ = ()
 
-    @abstractmethod
     def is_vnode(self, value):
         """ Check if a value is a vnode of this backend
 
         :param value: The value to check
         :return: True if it is a vnode
         """
+        return isinstance(value, BaseVnode) and value.backend is self
 
     @abstractmethod
     def commit(self, vnodes=None):

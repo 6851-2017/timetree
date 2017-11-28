@@ -14,10 +14,6 @@ class NopBackend(BaseBackend):
         super().__init__()
         self.head = None
 
-    def is_vnode(self, value):
-        super().is_vnode(value)
-        return isinstance(value, NopVnode)
-
     def commit(self, vnodes=None):
         """Commit is an illegal operation"""
         vnodes = super().commit(vnodes)
