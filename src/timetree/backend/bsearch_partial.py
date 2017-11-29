@@ -21,6 +21,12 @@ class BsearchPartialDnode:
             raise KeyError('Never created')
         mods = self.mods_dict[field]
 
+        assert mods, "Mods shouldn't be empty if it's in the dict"
+
+        # OPTIMIZATION: Fast-path for present-time queries
+        if mods[-1][0] <= version_num:
+            return mods[-1][1]
+
         # Binary search to find the last mod <= self.version_num
         mi = -1
         ma = len(mods)
