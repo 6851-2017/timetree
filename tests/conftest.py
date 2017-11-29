@@ -44,3 +44,6 @@ def backend(request):
         ))
 
     return backend_cls()
+
+
+backend2 = backend  # A second backend fixture, if we want two in the same test
