@@ -1,0 +1,33 @@
+import pytest
+
+
+@pytest.mark.persistence_none
+def test_any_backend(backend):
+    head, _ = backend.branch()
+    vnode = head.new_node()
+    vnode.set('f', 5)
+    assert vnode.get('f') == 5
+
+
+@pytest.mark.persistence_confluent
+def test_confluent_backend(backend):
+    head, _ = backend.branch()
+    vnode = head.new_node()
+    vnode.set('f', 5)
+    assert vnode.get('f') == 5
+    # test commit
+    commit, [old_vnode] = backend.commit([vnode])
+    vnode.set('f', 8)
+    assert vnode.get('f') == 8
+    assert old_vnode.get('f') == 5
+    # test full
+    head2, [vnode2] = backend.branch([old_vnode])
+    vnode2.set('f', 9)
+    assert vnode.get('f') == 8
+    assert old_vnode.get('f') == 5
+    assert vnode2.get('f') == 9
+    # test confluence
+    commit2, [vnode3] = backend.commit([vnode])
+    head, [new_vnode, new_vnode3] = backend.branch([old_vnode, vnode3])
+    assert new_vnode.get('f') == 5
+    assert new_vnode3.get('f') == 8

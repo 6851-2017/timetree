@@ -24,9 +24,9 @@ class NopBackend(BaseBackend):
         vnodes = super().branch(vnodes)
 
         if vnodes:
-            raise ValueError('NopBackend does not support branching from a commit')
+            raise NotImplementedError('NopBackend does not support branching from a commit')
         if self.head is not None:
-            raise ValueError('NopBackend only supports one head')
+            raise NotImplementedError('NopBackend only supports one head')
         self.head = NopVersion(self)
 
         return self.head, []
