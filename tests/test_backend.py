@@ -7,6 +7,33 @@ def test_any_backend(backend):
     vnode = head.new_node()
     vnode.set('f', 5)
     assert vnode.get('f') == 5
+    vnode2 = head.new_node()
+    vnode.set('ptr', vnode2)
+    vnode2.set('ptr', vnode)
+    assert vnode.get('ptr') == vnode2
+    assert vnode2.get('ptr') == vnode
+
+
+@pytest.mark.persistence_partial
+def test_partial_backend(backend):
+    head, _ = backend.branch()
+    vnode = head.new_node()
+    vnode.set('f', 5)
+    assert vnode.get('f') == 5
+    vnode2 = head.new_node()
+    vnode.set('ptr', vnode2)
+    vnode2.set('ptr', vnode)
+    assert vnode.get('ptr') == vnode2
+    assert vnode2.get('ptr') == vnode
+
+    # test commit
+    commit, [old_vnode] = backend.commit([vnode])
+    vnode.set('f', 8)
+    assert vnode.get('f') == 8
+    assert old_vnode.get('f') == 5
+    vnode2.set('ptr', None)
+    old_vnode2 = old_vnode.get('ptr')
+    assert old_vnode == old_vnode2.get('ptr')
 
 
 @pytest.mark.persistence_confluent
