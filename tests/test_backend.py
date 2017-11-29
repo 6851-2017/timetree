@@ -3,7 +3,7 @@ import pytest
 
 @pytest.mark.persistence_none
 def test_any_backend(backend):
-    head, _ = backend.branch()
+    head = backend.branch()
     vnode = head.new_node()
     vnode.set('f', 5)
     assert vnode.get('f') == 5
@@ -16,7 +16,7 @@ def test_any_backend(backend):
 
 @pytest.mark.persistence_partial
 def test_partial_backend(backend):
-    head, _ = backend.branch()
+    head = backend.branch()
     vnode = head.new_node()
     vnode.set('f', 5)
     assert vnode.get('f') == 5
@@ -38,7 +38,7 @@ def test_partial_backend(backend):
 
 @pytest.mark.persistence_confluent
 def test_confluent_backend(backend):
-    head, _ = backend.branch()
+    head = backend.branch()
     vnode = head.new_node()
     vnode.set('f', 5)
     assert vnode.get('f') == 5

@@ -73,7 +73,6 @@ class BaseBackend(metaclass=ABCMeta):
         """
         return isinstance(value, BaseVnode) and value.backend is self
 
-    @abstractmethod
     def commit(self, vnodes=None):
         """ Create a new commit based on the given head
 
@@ -88,14 +87,22 @@ class BaseBackend(metaclass=ABCMeta):
 
         :param vnodes: Vnodes which we would like references to; must be
         bound to the same head
-        :return: Reference to the new commit, a list of `vnodes` rebound to it
+        :return: Reference to the new commit, and if vnodes is given, a list of
+        `vnodes` rebound to it
         """
         # The default implementation sanitize vnodes into a list and
         # validates things
         if vnodes is None:
-            vnodes = []
+            return self._commit([])[0]
         else:
             vnodes = list(vnodes)
+            return self._commit(vnodes)
+
+    @abstractmethod
+    def _commit(self, vnodes):
+        """ Internal implementation of commit """
+        if not isinstance(vnodes, list):
+            raise TypeError("vnodes should be a list")
 
         if not all(self.is_vnode(vnode) for vnode in vnodes):
             raise ValueError('Invalid vnode in commit')
@@ -107,9 +114,6 @@ class BaseBackend(metaclass=ABCMeta):
             if not head.is_head:
                 raise ValueError('Vnode version not a head')
 
-        return vnodes
-
-    @abstractmethod
     def branch(self, vnodes=None):
         """ Create a new head based on the given vnodes
 
@@ -120,22 +124,28 @@ class BaseBackend(metaclass=ABCMeta):
 
         :param vnodes: Vnodes which we would like references to; must all be
         bound to commits
-        :return: Reference to the new head and a list of `vnodes` rebound to it
+        :return: Reference to the new head, and if vnodes is given, a list of
+        `vnodes` rebound to it
         """
         # The default implementation sanitize vnodes into a list and
         # validates things
         if vnodes is None:
-            vnodes = []
+            return self._branch([])[0]
         else:
             vnodes = list(vnodes)
+            return self._branch(vnodes)
+
+    @abstractmethod
+    def _branch(self, vnodes):
+        """ Internal implementation of branch """
+        if not isinstance(vnodes, list):
+            raise TypeError("vnodes should be a list")
 
         if not all(self.is_vnode(vnode) for vnode in vnodes):
             raise ValueError('Invalid vnode in branch')
 
         if not all(vnode.version.is_commit for vnode in vnodes):
             raise ValueError('Vnode is not a commit')
-
-        return vnodes
 
 
 class BaseVersion(metaclass=ABCMeta):

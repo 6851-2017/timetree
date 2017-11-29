@@ -12,14 +12,14 @@ class CopyBackend(BaseBackend):
     def __init__(self):
         super().__init__()
 
-    def commit(self, vnodes=None):
-        vnodes = super().commit(vnodes)
+    def _commit(self, vnodes):
+        super()._commit(vnodes)
 
         commit = CopyVersion(self, is_head=False)
         return commit, self._clone(vnodes, commit)
 
-    def branch(self, vnodes=None):
-        vnodes = super().branch(vnodes)
+    def _branch(self, vnodes):
+        super()._branch(vnodes)
 
         head = CopyVersion(self, is_head=True)
         return head, self._clone(vnodes, head)
