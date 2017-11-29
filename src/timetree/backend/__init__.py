@@ -8,11 +8,13 @@ to full to confluent persistence.
 """
 
 from .base import BaseBackend
+from .bsearch_partial import BsearchPartialBackend
 from .copy import CopyBackend
 from .nop import NopBackend
 
 __all__ = [
     'BaseBackend',
+    'BsearchPartialBackend',
     'CopyBackend',
     'NopBackend',
 ]

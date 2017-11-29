@@ -13,6 +13,7 @@ persistence_levels = [
 backend_info = [
     (timetree.backend.NopBackend, pytest.mark.persistence_none),
     (timetree.backend.CopyBackend, pytest.mark.persistence_confluent),
+    (timetree.backend.BsearchPartialBackend, pytest.mark.persistence_partial),
 ]
 
 
