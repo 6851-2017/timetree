@@ -61,7 +61,7 @@ def make_persistent(klass):
             if timetree_version is None:
                 # Get the version
                 if timetree_backend is not None:
-                    timetree_version, _ = timetree_backend.branch([])
+                    timetree_version, _ = timetree_backend.branch()
                 elif global_version is not None:
                     timetree_version = global_version
                 else:
@@ -189,7 +189,7 @@ def _create_version(args, *, is_branch=False, is_commit=False):
     make_version = backend.branch if is_branch else backend.commit
 
     if not args:
-        new_version, _ = make_version([])
+        new_version, _ = make_version()
         return new_version
 
     if len(args) == 1 and not isinstance(args[0], TimetreeProxy):
