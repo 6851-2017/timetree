@@ -34,12 +34,10 @@ class NopBackend(BaseBackend):
 
 class NopVersion(BaseVersion):
     """ Only exists as a head """
-    __slots__ = ('backend', 'is_head')
+    __slots__ = ()
 
     def __init__(self, backend):
-        super().__init__()
-        self.backend = backend
-        self.is_head = True
+        super().__init__(backend, is_head=True)
 
     def new_node(self):
         super().new_node()
@@ -47,11 +45,10 @@ class NopVersion(BaseVersion):
 
 
 class NopVnode(BaseVnode):
-    __slots__ = ('version', 'values')
+    __slots__ = ('values', )
 
     def __init__(self, version):
-        super().__init__()
-        self.version = version
+        super().__init__(version)
         self.values = dict()
 
     def get(self, field):

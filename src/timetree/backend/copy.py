@@ -48,12 +48,10 @@ class CopyBackend(BaseBackend):
 
 
 class CopyVersion(BaseVersion):
-    __slots__ = ('backend', 'is_head', 'vnodes')
+    __slots__ = ('vnodes',)
 
     def __init__(self, backend, is_head):
-        super().__init__()
-        self.backend = backend
-        self.is_head = is_head
+        super().__init__(backend, is_head)
         self.vnodes = []
 
     def new_node(self):
@@ -64,10 +62,10 @@ class CopyVersion(BaseVersion):
 
 
 class CopyVnode(BaseVnode):
-    __slots__ = ('version', 'values')
+    __slots__ = ('values',)
 
     def __init__(self, version):
-        self.version = version
+        super().__init__(version)
         self.values = dict()
 
     def get(self, field):

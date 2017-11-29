@@ -150,10 +150,11 @@ class BaseBackend(metaclass=ABCMeta):
 
 class BaseVersion(metaclass=ABCMeta):
     """ Abstract base class for versions of backends """
-    __slots__ = ()
+    __slots__ = ('backend', 'is_head', )
 
-    # self.backend is the backend
-    backend = None
+    def __init__(self, backend, is_head):
+        self.backend = backend
+        self.is_head = is_head
 
     @abstractmethod
     def new_node(self):
@@ -166,9 +167,6 @@ class BaseVersion(metaclass=ABCMeta):
         if not self.is_head:
             raise ValueError("Can only create in head versions")
 
-    # self.is_head is whether the commit is a head
-    is_head = False
-
     @property
     def is_commit(self):
         """ Returns whether a version is a commit or a head
@@ -180,10 +178,10 @@ class BaseVersion(metaclass=ABCMeta):
 
 class BaseVnode(metaclass=ABCMeta):
     """ Abstract base class for vnodes of backends """
-    __slots__ = ()
+    __slots__ = ('version', )
 
-    # self.version is the version
-    version = None
+    def __init__(self, version):
+        self.version = version
 
     @property
     def backend(self):
