@@ -36,6 +36,9 @@ class BasePartialBackend(BaseDivergentBackend, metaclass=ABCMeta):
 
     Handles most of the heavy lifting of version management. The user only
     needs to implement the Vnode and set Backend.vnode_cls to it.
+
+    _commit just uses shallow copies to clone vnodes; if this isn't correct,
+    override _commit.
     """
     __slots__ = ('head')
 
