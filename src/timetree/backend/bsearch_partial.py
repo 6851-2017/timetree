@@ -71,7 +71,7 @@ class BsearchPartialVnode(BasePartialVnode):
         super().get(field)
         result = self.dnode.get(field, self.version_num)
         if isinstance(result, BsearchPartialDnode):
-            result = self.__class__(self.version, dnode=result)
+            result = BsearchPartialVnode(self.version, dnode=result)
         return result
 
     def set(self, field, value):
