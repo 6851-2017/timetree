@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from .base_partial import BasePartialBackend
 from .base_partial import BasePartialVnode
@@ -7,6 +7,7 @@ from .base_partial import BasePartialVnode
 class BsearchPartialBackend(BasePartialBackend):
     __slots__ = ()
 
+Mod = namedtuple('Mod', ['version', 'value'])
 
 class BsearchPartialDnode:
     __slots__ = ('mods_dict',)
@@ -24,15 +25,15 @@ class BsearchPartialDnode:
         assert mods, "Mods shouldn't be empty if it's in the dict"
 
         # OPTIMIZATION: Fast-path for present-time queries
-        if mods[-1][0] <= version_num:
-            return mods[-1][1]
+        if mods[-1].version <= version_num:
+            return mods[-1].value
 
         # Binary search to find the last mod <= self.version_num
         mi = -1
         ma = len(mods)
         while ma - mi > 1:
             md = (mi + ma) // 2
-            if mods[md][0] <= version_num:
+            if mods[md].version <= version_num:
                 mi = md
             else:
                 ma = md
@@ -40,7 +41,7 @@ class BsearchPartialDnode:
         if mi == -1:
             raise KeyError('Not created yet')
 
-        result = mods[mi][1]
+        result = mods[mi].value
 
         if result is self._deleted_marker:
             raise KeyError('Field deleted')
@@ -48,10 +49,10 @@ class BsearchPartialDnode:
         return result
 
     def set(self, field, value, version_num):
-        self.mods_dict[field].append((version_num, value))
+        self.mods_dict[field].append(Mod(version_num, value))
 
     def delete(self, field, version_num):
-        self.mods_dict[field].append((version_num, self._deleted_marker))
+        self.set(field, self._deleted_marker, version_num)
 
 
 class BsearchPartialVnode(BasePartialVnode):
