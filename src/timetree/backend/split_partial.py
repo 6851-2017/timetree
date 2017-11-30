@@ -1,9 +1,6 @@
-import bisect
 from collections import defaultdict
 import weakref
 
-from .base_partial import BasePartialBackend
-from .base_partial import BasePartialVnode
 from .bsearch_partial import BsearchPartialBackend
 from .bsearch_partial import BsearchPartialDnode
 from .bsearch_partial import BsearchPartialVnode
