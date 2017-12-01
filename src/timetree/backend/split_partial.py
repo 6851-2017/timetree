@@ -14,6 +14,8 @@ class SplitPartialDnode(BsearchPartialDnode):
     def __init__(self):
         super().__init__()
         # TODO: Init the backend
+        # Don't we need to remember which field it's in? If we're storing
+        # pairs, they shouldn't be weakrefs
         self._field_backrefs = weakref.WeakSet()
         self._vnode_backrefs = weakref.WeakSet()
 
@@ -21,13 +23,13 @@ class SplitPartialDnode(BsearchPartialDnode):
         if len(self.mods_dict[field]) > 0:
             # delete old backref
             old_value = self.get(field, version_num)
-            if isinstance(old_value, SplitPartialVnode):
+            if isinstance(old_value, SplitPartialDnode):
                 old_value._field_backrefs.remove((weakref.ref(self), field))
 
         super().set(field, value, version_num)
 
         # add new backref
-        if isinstance(value, SplitPartialVnode):
+        if isinstance(value, SplitPartialDnode):
             value._field_backrefs.add((self, field))
 
         # split if necessary
