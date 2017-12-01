@@ -1,4 +1,5 @@
-from collections import defaultdict, namedtuple
+from collections import defaultdict
+from collections import namedtuple
 
 from .base_partial import BasePartialBackend
 from .base_partial import BasePartialVnode
@@ -7,7 +8,9 @@ from .base_partial import BasePartialVnode
 class BsearchPartialBackend(BasePartialBackend):
     __slots__ = ()
 
+
 Mod = namedtuple('Mod', ['version', 'value'])
+
 
 class BsearchPartialDnode:
     __slots__ = ('mods_dict',)

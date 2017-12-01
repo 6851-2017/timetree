@@ -35,6 +35,7 @@ def test_partial_backend(backend):
     old_vnode2 = old_vnode.get('ptr')
     assert old_vnode == old_vnode2.get('ptr')
 
+
 @pytest.mark.persistence_partial
 def test_partial_backend_many_commits(backend):
     head = backend.branch()
@@ -50,6 +51,7 @@ def test_partial_backend_many_commits(backend):
     for i in range(1000):
         assert commits[i][0].get('ptr').get('val') == i
         assert commits[i][1].get('val') == i
+
 
 @pytest.mark.persistence_partial
 def test_partial_backend_chain_split(backend):
@@ -94,6 +96,7 @@ def test_partial_backend_chain_split(backend):
             assert vnode.get('b') == vnode_b
             assert vnode.get('c') == vnode_c
             assert vnode.get('d') == vnode_d
+
 
 @pytest.mark.persistence_partial
 def test_partial_backend_keyerror(backend):
