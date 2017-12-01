@@ -26,22 +26,22 @@ class BsearchPartialDnode:
 
         # OPTIMIZATION: Fast-path for present-time queries
         if mods[-1].version <= version_num:
-            return mods[-1].value
+            result = mods[-1].value
+        else:
+            # Binary search to find the last mod <= self.version_num
+            mi = -1
+            ma = len(mods)
+            while ma - mi > 1:
+                md = (mi + ma) // 2
+                if mods[md].version <= version_num:
+                    mi = md
+                else:
+                    ma = md
 
-        # Binary search to find the last mod <= self.version_num
-        mi = -1
-        ma = len(mods)
-        while ma - mi > 1:
-            md = (mi + ma) // 2
-            if mods[md].version <= version_num:
-                mi = md
-            else:
-                ma = md
+            if mi == -1:
+                raise KeyError('Not created yet')
 
-        if mi == -1:
-            raise KeyError('Not created yet')
-
-        result = mods[mi].value
+            result = mods[mi].value
 
         if result is self._deleted_marker:
             raise KeyError('Field deleted')
@@ -72,7 +72,7 @@ class BsearchPartialVnode(BasePartialVnode):
         super().get(field)
         result = self.dnode.get(field, self.version_num)
         if isinstance(result, BsearchPartialDnode):
-            result = BsearchPartialVnode(self.version, dnode=result)
+            result = self.__class__(self.version, dnode=result)
         return result
 
     def set(self, field, value):

@@ -48,6 +48,32 @@ def test_partial_backend_many_commits(backend):
     for i in range(1000):
         assert commits[i].get('val') == i
 
+@pytest.mark.persistence_partial
+def test_partial_backend_keyerror(backend):
+    head = backend.branch()
+    vnode = head.new_node()
+    commits = []
+
+    with pytest.raises(KeyError):
+        vnode.get('val')
+    commits.append(vnode.commit())
+
+    vnode.set('val', 1)
+    assert vnode.get('val') == 1
+    commits.append(vnode.commit())
+
+    vnode.delete('val')
+    with pytest.raises(KeyError):
+        vnode.get('val')
+    commits.append(vnode.commit())
+
+    with pytest.raises(KeyError):
+        commits[0].get('val')
+    assert commits[1].get('val') == 1
+    with pytest.raises(KeyError):
+        commits[2].get('val')
+
+
 @pytest.mark.persistence_confluent
 def test_confluent_backend(backend):
     head = backend.branch()
