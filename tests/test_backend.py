@@ -38,15 +38,18 @@ def test_partial_backend(backend):
 @pytest.mark.persistence_partial
 def test_partial_backend_many_commits(backend):
     head = backend.branch()
+    root = head.new_node()
     vnode = head.new_node()
+    root.set('ptr', vnode)
 
     commits = []
     for i in range(1000):
         vnode.set('val', i)
-        commits.append(vnode.commit())
+        commits.append(backend.commit([root, vnode])[1])
 
     for i in range(1000):
-        assert commits[i].get('val') == i
+        assert commits[i][0].get('ptr').get('val') == i
+        assert commits[i][1].get('val') == i
 
 @pytest.mark.persistence_partial
 def test_partial_backend_keyerror(backend):
