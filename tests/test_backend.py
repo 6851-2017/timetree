@@ -35,6 +35,18 @@ def test_partial_backend(backend):
     old_vnode2 = old_vnode.get('ptr')
     assert old_vnode == old_vnode2.get('ptr')
 
+@pytest.mark.persistence_partial
+def test_partial_backend_many_commits(backend):
+    head = backend.branch()
+    vnode = head.new_node()
+
+    commits = []
+    for i in range(1000):
+        vnode.set('val', i)
+        commits.append(vnode.commit())
+
+    for i in range(1000):
+        assert commits[i].get('val') == i
 
 @pytest.mark.persistence_confluent
 def test_confluent_backend(backend):

@@ -18,16 +18,16 @@ class SplitPartialDnode(BsearchPartialDnode):
         self._vnode_backrefs = weakref.WeakSet()
 
     def set(self, field, value, version_num):
-        old_value = self.get(field, version_num)
-
-        # delete old backref
-        if self.backend.is_vnode(old_value):
-            old_value._field_backrefs.remove((weakref.ref(self), field))
+        if len(self.mods_dict[field]) > 0:
+            # delete old backref
+            old_value = self.get(field, version_num)
+            if isinstance(old_value, SplitPartialVnode):
+                old_value._field_backrefs.remove((weakref.ref(self), field))
 
         super().set(field, value, version_num)
 
         # add new backref
-        if self.backend.is_vnode(value):
+        if isinstance(value, SplitPartialVnode):
             value._field_backrefs.add((self, field))
 
         # split if necessary
@@ -35,7 +35,7 @@ class SplitPartialDnode(BsearchPartialDnode):
             new_dnode = SplitPartialDnode()
 
             for field, mods in self.mods_dict.items():
-                new_dnode.mods_dict[field] = mods[-1]
+                new_dnode.mods_dict[field] = [mods[-1]]
 
             for dnode, field in self._field_backrefs:
                 dnode.set(field, new_dnode, version_num)
@@ -46,8 +46,9 @@ class SplitPartialDnode(BsearchPartialDnode):
 
 
 class SplitPartialVnode(BsearchPartialVnode):
-    __slots__ = ()
+    __slots__ = ('__weakref__',)
     def __init__(self, version, *, dnode=None):
+        dnode = dnode or SplitPartialDnode()
         super().__init__(version, dnode=dnode)
 
         self.dnode._vnode_backrefs.add(self)
