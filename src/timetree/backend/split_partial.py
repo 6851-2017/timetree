@@ -1,10 +1,9 @@
 import weakref
 
+from .base_partial import BasePartialVersion
 from .bsearch_partial import BsearchPartialBackend
 from .bsearch_partial import BsearchPartialDnode
 from .bsearch_partial import BsearchPartialVnode
-
-from .base_partial import BasePartialVersion
 
 
 class SplitPartialBackend(BsearchPartialBackend):
@@ -12,22 +11,18 @@ class SplitPartialBackend(BsearchPartialBackend):
 
 
 class SplitPartialDnode(BsearchPartialDnode):
-    __slots__ = ('_field_backrefs', '_vnode_backrefs', '__weakref__', '_in_split')
+    __slots__ = ('_field_backrefs', '_vnode_backrefs', '__weakref__')
 
     def __init__(self):
         super().__init__()
         self._field_backrefs = weakref.WeakKeyDictionary()  # This should be a weak key default dict
         self._vnode_backrefs = weakref.WeakSet()
-        self._in_split = False
 
     def set(self, field, value, version_num):
         if len(self.mods_dict[field]) > 0:
             # delete old backref
             old_value = self.get(field, version_num)
             if isinstance(old_value, SplitPartialDnode):
-                if version_num > 62:
-                    pass
-                    print(old_value, dict(old_value._field_backrefs))
                 old_value._field_backrefs[self].remove(field)
 
         super().set(field, value, version_num)
@@ -64,28 +59,19 @@ class SplitPartialDnode(BsearchPartialDnode):
                     new_dnode._vnode_backrefs.add(vnode)
 
             # update forward references to this node, possibly causing chain reactions
-            self._in_split = False
-            new_dnode._in_split = True
+            new_vnode = SplitPartialVnode(InternalPartialHead(version_num), dnode=new_dnode)
+            # construct vnodes which keep tabs on the head dnode
             for vnode in [SplitPartialVnode(InternalPartialHead(version_num), dnode=dnode) for dnode in self._field_backrefs]:
                 for field in set(self._field_backrefs[vnode.dnode]):
-                    try:
-                        vnode.dnode.set(field, new_dnode, version_num)
-                    except:
-                        print(vnode.dnode, field, new_dnode, version_num)
-                        raise
-                    if not new_dnode._in_split:
-                        return
-            new_dnode._in_split = False
-
-    # def __repr__(self):
-        # return 'SplitPartialDnode<%s, (%s, %s)>' % (self.mods_dict['val'][-1].value, self.mods_dict['val'][0].version, self.mods_dict['val'][-1].version)
+                    vnode.dnode.set(field, new_vnode.dnode, version_num)
 
 
 class InternalPartialHead(BasePartialVersion):
+    '''For use as a temporary internal head, used to track dnodes across recursive splits.'''
     __slots__ = ('version_num', )
 
     def __init__(self, version_num):
-        super().__init__(None, is_head=True)
+        super().__init__(backend=None, is_head=True)
         self.version_num = version_num
 
     def new_node(self):
