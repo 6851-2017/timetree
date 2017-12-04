@@ -1,5 +1,6 @@
 import weakref
 
+from .base_partial import BasePartialVersion
 from .bsearch_partial import BsearchPartialBackend
 from .bsearch_partial import BsearchPartialDnode
 from .bsearch_partial import BsearchPartialVnode
@@ -18,7 +19,7 @@ class SplitPartialDnode(BsearchPartialDnode):
         self._vnode_backrefs = weakref.WeakSet()
 
     def _add_field_backref(self, dnode, field):
-        # self._field_backrefs[dnode] = self._field_backrefs.get(dnode, set())
+        self._field_backrefs[dnode] = self._field_backrefs.get(dnode, set())
         self._field_backrefs[dnode].add(field)
 
     def _remove_field_backref(self, dnode, field):
@@ -44,11 +45,17 @@ class SplitPartialDnode(BsearchPartialDnode):
             # print('split', self, field, self.mods_dict['val'][-1])
             new_dnode = SplitPartialDnode()
 
-            # The order of these 4 loops is extremely important. I think I got it right this time, but I'm not 100% sure.
+            # The order of these 3 loops is extremely important. I think I got it right this time, but I'm not 100% sure.
 
-            # copy fields
-            for field, mods in self.mods_dict.items():
-                new_dnode.mods_dict[field] = [mods[-1]]
+            for field, mod in [(field, mods[-1]) for field, mods in self.mods_dict.items()]:
+                # copy fields
+                new_dnode.mods_dict[field] = [mod]
+
+                # update backreferences to this node
+                value = mod.value
+                if isinstance(value, SplitPartialDnode):
+                    value._remove_field_backref(self, field)
+                    value._add_field_backref(new_dnode, field)
 
             # update head vnodes
             for vnode in set(self._vnode_backrefs):
@@ -57,13 +64,6 @@ class SplitPartialDnode(BsearchPartialDnode):
                     self._vnode_backrefs.remove(vnode)
                     vnode.dnode = new_dnode
                     new_dnode._vnode_backrefs.add(vnode)
-
-            # update backreferences to this node
-            for field, mods in self.mods_dict.items():
-                value = mods[-1].value
-                if isinstance(value, SplitPartialDnode):
-                    value._remove_field_backref(self, field)
-                    value._add_field_backref(new_dnode, field)
 
             # update forward references to this node, possibly causing chain reactions
             while self._field_backrefs:
@@ -80,6 +80,9 @@ class SplitPartialVnode(BsearchPartialVnode):
         super().__init__(version, dnode=dnode)
 
         self.dnode._vnode_backrefs.add(self)
+
+    def __repr__(self):
+        return 'SplitPartialVnode<%s, %s>' % (self.version.version_num, self.dnode)
 
 
 SplitPartialBackend.vnode_cls = SplitPartialVnode
