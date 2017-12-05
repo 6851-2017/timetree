@@ -194,6 +194,18 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
         result = (self.lower.upper.label, self.lower.label)
         return result
 
+    def __lt__(self, other):
+        return self.label < other.label
+
+    def __gt__(self, other):
+        return self.label > other.label
+
+    def __le__(self, other):
+        return self.label <= other.label
+
+    def __ge__(self, other):
+        return self.label >= other.label
+
 
 class FastLabelerListMixin(SizeTrackingListMixin):
     __slots__ = ('lower',)
