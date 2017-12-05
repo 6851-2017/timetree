@@ -108,7 +108,7 @@ class ExponentialLabelerListMixin(LinkedList):
 
     def __init__(self, *args, capacity, **kwargs):
         super().__init__(*args, **kwargs)
-        self.capacity = max(capacity, 31)  # Might as well use 32-bits
+        self.capacity = capacity
 
 
 class FastLabelerNodeMixin(SizeTrackingNodeMixin):
@@ -164,10 +164,13 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
             nodes = list(cur_lower)
             for node in nodes:
                 node.remove()
+            assert cur_lower.next is cur_lower
 
             # The new capacity is log(list_size), and the size is half of that
             new_capacity = max(self.size.bit_length(), 2)
             new_size = new_capacity // 2
+
+            cur_lower.capacity = new_capacity
 
             assert nodes, "We should have at least one node"
 
@@ -214,4 +217,4 @@ class FastLabelerListMixin(SizeTrackingListMixin):
         upper = FastLabelerNodeMixin.UpperList()
         upper_node = FastLabelerNodeMixin.UpperNode()
         upper.prepend(upper_node)
-        self.lower = FastLabelerNodeMixin.LowerList(upper_node, capacity=30)
+        self.lower = FastLabelerNodeMixin.LowerList(upper_node, capacity=5)
