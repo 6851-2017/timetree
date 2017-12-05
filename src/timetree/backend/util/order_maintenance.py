@@ -90,10 +90,13 @@ class ExponentialLabelerNodeMixin(LinkedNode):
         prev_label = self.prev.label if self.prev.is_node else 0
         next_label = self.next.label if self.next.is_node else (1 << self.next.capacity)
 
+        assert prev_label < next_label
+
         if next_label - prev_label == 1:
             raise ExponentialLabelerNodeMixin.LabelError('Out of labels')
 
-        self.label = (next_label - prev_label) // 2
+        # The label is the mean
+        self.label = (prev_label + next_label) // 2
 
     def remove(self):
         super().remove()
@@ -120,8 +123,8 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
             self.upper = None
 
         def insert(self, prev):
-            super().insert(prev)
             self.upper = prev.upper
+            super().insert(prev)
 
         def remove(self):
             super().remove()
@@ -146,7 +149,7 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
         __slots__ = ()
 
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.lower = FastLabelerNodeMixin.LowerNode(self)
 
     def insert(self, prev):
@@ -156,34 +159,30 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
         except ExponentialLabelerNodeMixin.LabelError:
             # We have to reflow things, so grab the list of lowers
             cur_upper = self.lower.upper
-            lower_list = cur_upper.lower_list
-            cur_upper.lower_list = None  # Remove the old list
+            cur_lower = cur_upper.lower_list
+
+            nodes = list(cur_lower)
+            for node in nodes:
+                node.remove()
 
             # The new capacity is log(list_size), and the size is half of that
-            new_capacity = self.head.size.bit_length()
+            new_capacity = max(self.size.bit_length(), 2)
             new_size = new_capacity // 2
 
-            assert lower_list.next.is_node, "Lower list should contain at least ourself"
+            assert nodes, "We should have at least one node"
 
-            while True:
-                cur_lower = FastLabelerNodeMixin.LowerList(cur_upper, capacity=new_capacity)
-
-                for i in range(new_size):
-                    if lower_list.next.is_head:
-                        break
-
-                    new_lower = lower_list.next
-                    new_lower.remove()
-                    new_lower.insert(cur_lower)
-                    cur_lower = new_lower
-
-                if lower_list.next.is_head:
-                    break
-
-                # Prepare a new upper node
-                new_upper = FastLabelerNodeMixin.UpperNode()
-                new_upper.insert(cur_upper)
-                cur_upper = new_upper
+            cur_size = 0
+            for node in nodes:
+                if cur_size == new_size:
+                    # Prepare a new upper node
+                    new_upper = FastLabelerNodeMixin.UpperNode()
+                    new_upper.insert(cur_upper)
+                    cur_upper = new_upper
+                    cur_lower = FastLabelerNodeMixin.LowerList(cur_upper, capacity=new_capacity)
+                    cur_size = 0
+                node.insert(cur_lower)
+                cur_lower = node
+                cur_size += 1
 
     def remove(self):
         super().remove()
@@ -211,8 +210,8 @@ class FastLabelerListMixin(SizeTrackingListMixin):
     __slots__ = ('lower',)
 
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         upper = FastLabelerNodeMixin.UpperList()
         upper_node = FastLabelerNodeMixin.UpperNode()
         upper.prepend(upper_node)
-        self.lower = FastLabelerNodeMixin.LowerList(upper_node, capacity=31)
+        self.lower = FastLabelerNodeMixin.LowerList(upper_node, capacity=30)

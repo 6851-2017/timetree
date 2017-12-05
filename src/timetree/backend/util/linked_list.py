@@ -18,22 +18,20 @@ class LinkedNode:
         """ Insert yourself into prev's linked list right after prev """
         # Insert self between prev..next
         assert self.prev is None and self.next is None, 'prev and next should be None'
+        assert prev is not None
 
-        next = prev.next
-        tail = self.prev
+        self.next = prev.next
+        self.next.prev = self
 
         self.prev = prev
-        prev.next = self
-
-        tail.next = next
-        next.prev = tail
+        self.prev.next = self
 
     def remove(self):
         self.prev.next = self.next
         self.next.prev = self.prev
 
-        self.next = self
-        self.prev = self
+        self.next = None
+        self.prev = None
 
 
 class LinkedList:
@@ -129,6 +127,10 @@ class SizeTrackingNodeMixin(HeadTrackingNodeMixin):
         self.head.size -= 1
         super().remove()
 
+    @property
+    def size(self):
+        return self.head.size
+
 
 class SizeTrackingListMixin(HeadTrackingListMixin):
     __slots__ = ('size',)
@@ -136,3 +138,6 @@ class SizeTrackingListMixin(HeadTrackingListMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.size = 0
+
+    def __len__(self):
+        return self.size
