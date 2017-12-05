@@ -11,13 +11,13 @@ class QuadraticLabelerNodeMixin(LinkedNode):
         super().__init__(*args, **kwargs)
         self.label = None
 
-    def insert(self, prev):
+    def insert_self(self, prev):
         # We now search up layers until we hit a valid range to relabel things
         # Note that this is carefully constructed so that each node's label
         # is set at most once, to allow for subclasses to intercept it properly
 
         # Insert yourself
-        super().insert(prev)
+        super().insert_self(prev)
 
         # Initialize the search at layer 0
         layer = 0
@@ -65,8 +65,8 @@ class QuadraticLabelerNodeMixin(LinkedNode):
                 break
             cur_node = cur_node.next
 
-    def remove(self):
-        super().remove()
+    def remove_self(self):
+        super().remove_self()
         self.label = None
 
 
@@ -84,8 +84,8 @@ class ExponentialLabelerNodeMixin(LinkedNode):
     class LabelError(ValueError):
         pass
 
-    def insert(self, prev):
-        super().insert(prev)
+    def insert_self(self, prev):
+        super().insert_self(prev)
 
         prev_label = self.prev.label if self.prev.is_node else 0
         next_label = self.next.label if self.next.is_node else (1 << self.next.capacity)
@@ -98,8 +98,8 @@ class ExponentialLabelerNodeMixin(LinkedNode):
         # The label is the mean
         self.label = (prev_label + next_label) // 2
 
-    def remove(self):
-        super().remove()
+    def remove_self(self):
+        super().remove_self()
         self.label = None
 
 
@@ -122,12 +122,12 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
             self.node = node
             self.upper = None
 
-        def insert(self, prev):
+        def insert_self(self, prev):
             self.upper = prev.upper
-            super().insert(prev)
+            super().insert_self(prev)
 
-        def remove(self):
-            super().remove()
+        def remove_self(self):
+            super().remove_self()
             self.upper = None
 
     class LowerList(ExponentialLabelerListMixin):
@@ -152,10 +152,10 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
         super().__init__(*args, **kwargs)
         self.lower = FastLabelerNodeMixin.LowerNode(self)
 
-    def insert(self, prev):
-        super().insert(prev)
+    def insert_self(self, prev):
+        super().insert_self(prev)
         try:
-            self.lower.insert(prev.lower)
+            self.lower.insert_self(prev.lower)
         except ExponentialLabelerNodeMixin.LabelError:
             # We have to reflow things, so grab the list of lowers
             cur_upper = self.lower.upper
@@ -163,7 +163,7 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
 
             nodes = list(cur_lower)
             for node in nodes:
-                node.remove()
+                node.remove_self()
             assert cur_lower.next is cur_lower
 
             # The new capacity is log(list_size), and the size is half of that
@@ -179,17 +179,17 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
                 if cur_size == new_size:
                     # Prepare a new upper node
                     new_upper = FastLabelerNodeMixin.UpperNode()
-                    new_upper.insert(cur_upper)
+                    new_upper.insert_self(cur_upper)
                     cur_upper = new_upper
                     cur_lower = FastLabelerNodeMixin.LowerList(cur_upper, capacity=new_capacity)
                     cur_size = 0
-                node.insert(cur_lower)
+                node.insert_self(cur_lower)
                 cur_lower = node
                 cur_size += 1
 
-    def remove(self):
-        super().remove()
-        self.lower.remove()
+    def remove_self(self):
+        super().remove_self()
+        self.lower.remove_self()
 
     @property
     def label(self):

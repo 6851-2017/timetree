@@ -48,7 +48,7 @@ def test_labeler(lst_fn, node_fn):
         # Insert based on the function
         insert_point = insert_fn()
 
-        new_node.insert(insert_point)
+        new_node.insert_self(insert_point)
 
         assert insert_point.next == new_node and new_node.prev == insert_point
 
