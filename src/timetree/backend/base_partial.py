@@ -1,10 +1,20 @@
 from abc import ABCMeta
 from abc import abstractmethod
-from copy import copy
 
 from .base import BaseBackend
 from .base import BaseVersion
 from .base import BaseVnode
+
+
+class BaseCopyableVnode(BaseVnode, metaclass=ABCMeta):
+    __slots__ = ()
+
+    @abstractmethod
+    def copy(self, new_version):
+        """ We guarantee the new_version and the current version correspond
+        to the same represented object
+        """
+        pass
 
 
 class BaseDivergentBackend(BaseBackend, metaclass=ABCMeta):
@@ -15,20 +25,12 @@ class BaseDivergentBackend(BaseBackend, metaclass=ABCMeta):
 
     @abstractmethod
     def _branch(self, vnodes):
-        BaseBackend._branch(self, vnodes)
+        super()._branch(vnodes)
 
         if vnodes:
             commit = vnodes[0].version
             if not all(vnode.version == commit for vnode in vnodes):
                 raise NotImplementedError('Vnodes must all have the same version')
-
-
-class BaseDivergentVersion(BaseVersion, metaclass=ABCMeta):
-    __slots__ = ()
-
-
-class BaseDivergentVnode(BaseVnode, metaclass=ABCMeta):
-    __slots__ = ()
 
 
 class BasePartialBackend(BaseDivergentBackend, metaclass=ABCMeta):
@@ -42,20 +44,19 @@ class BasePartialBackend(BaseDivergentBackend, metaclass=ABCMeta):
     """
     __slots__ = ('head')
 
-    vnode_cls = None  # Type of vnodes to create, e.g. BasePartialVnode
+    vnode_cls = BaseCopyableVnode  # Type of vnodes to create, should be Copyable
 
     def __init__(self):
         self.head = PartialHead(self, self.vnode_cls)
 
     def _commit(self, vnodes):
         """ Default just makes a shallow copy of vnodes and returns it """
-        BaseDivergentBackend._commit(self, vnodes)
+        super()._commit(vnodes)
 
         commit = PartialCommit(self, self.head.version_num)
         result = []
         for vnode in vnodes:
-            new_vnode = copy(vnode)
-            new_vnode.version = commit
+            new_vnode = vnode.copy(commit)
             result.append(new_vnode)
 
         self.head.version_num += 1
@@ -63,7 +64,7 @@ class BasePartialBackend(BaseDivergentBackend, metaclass=ABCMeta):
         return commit, result
 
     def _branch(self, vnodes):
-        BaseDivergentBackend._branch(self, vnodes)
+        super()._branch(vnodes)
 
         if not vnodes:
             return self.head, []
@@ -71,7 +72,7 @@ class BasePartialBackend(BaseDivergentBackend, metaclass=ABCMeta):
         raise NotImplementedError("Partially persistent backends cannot branch")
 
 
-class BasePartialVersion(BaseDivergentVersion, metaclass=ABCMeta):
+class BasePartialVersion(BaseVersion, metaclass=ABCMeta):
     __slots__ = ()
 
 
@@ -96,14 +97,3 @@ class PartialCommit(BasePartialVersion):
 
     def new_node(self):
         raise ValueError("Can't create a node from a commit")
-
-
-class BasePartialVnode(BaseDivergentVnode, metaclass=ABCMeta):
-    __slots__ = ()
-
-    def __init__(self, version):
-        super().__init__(version)
-
-    @property
-    def version_num(self):
-        return self.version.version_num

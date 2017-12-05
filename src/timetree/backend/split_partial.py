@@ -1,16 +1,12 @@
 import weakref
 
+from .base_dnode import BaseDnodeBackedVnode
+from .base_dnode import BsearchDnode
+from .base_partial import BasePartialBackend
 from .base_partial import BasePartialVersion
-from .bsearch_partial import BsearchPartialBackend
-from .bsearch_partial import BsearchPartialDnode
-from .bsearch_partial import BsearchPartialVnode
 
 
-class SplitPartialBackend(BsearchPartialBackend):
-    __slots__ = ()
-
-
-class SplitPartialDnode(BsearchPartialDnode):
+class SplitPartialDnode(BsearchDnode):
     __slots__ = ('_field_backrefs', '_vnode_backrefs', '__weakref__')
 
     def __init__(self):
@@ -78,11 +74,12 @@ class InternalPartialHead(BasePartialVersion):
         raise NotImplementedError('New node cannot be constructed from an internal version.')
 
 
-class SplitPartialVnode(BsearchPartialVnode):
+class SplitPartialVnode(BaseDnodeBackedVnode):
     __slots__ = ('__weakref__',)
 
+    dnode_cls = SplitPartialDnode
+
     def __init__(self, version, *, dnode=None):
-        dnode = dnode or SplitPartialDnode()
         super().__init__(version, dnode=dnode)
 
         self.dnode._vnode_backrefs.add(self)
@@ -91,4 +88,7 @@ class SplitPartialVnode(BsearchPartialVnode):
         return 'SplitPartialVnode<%s, %s>' % (self.version.version_num, self.dnode)
 
 
-SplitPartialBackend.vnode_cls = SplitPartialVnode
+class SplitPartialBackend(BasePartialBackend):
+    __slots__ = ()
+
+    vnode_cls = SplitPartialVnode
