@@ -2,27 +2,27 @@ import random
 
 import pytest
 
-from timetree.backend.util.order_maintenance import ExponentialLabelerListMixin
-from timetree.backend.util.order_maintenance import ExponentialLabelerNodeMixin
-from timetree.backend.util.order_maintenance import FastLabelerListMixin
-from timetree.backend.util.order_maintenance import FastLabelerNodeMixin
-from timetree.backend.util.order_maintenance import QuadraticLabelerListMixin
-from timetree.backend.util.order_maintenance import QuadraticLabelerNodeMixin
+from timetree.backend.util.order_maintenance import ExponentialLabelerList
+from timetree.backend.util.order_maintenance import ExponentialLabelerNode
+from timetree.backend.util.order_maintenance import FastLabelerList
+from timetree.backend.util.order_maintenance import FastLabelerNode
+from timetree.backend.util.order_maintenance import QuadraticLabelerList
+from timetree.backend.util.order_maintenance import QuadraticLabelerNode
 
 
 @pytest.mark.parametrize("lst_fn,node_fn", [
     pytest.param(
-        lambda: ExponentialLabelerListMixin(capacity=2),
-        lambda: ExponentialLabelerNodeMixin(),
-        marks=pytest.mark.xfail(raises=ExponentialLabelerNodeMixin.LabelError),
+        lambda: ExponentialLabelerList(capacity=2),
+        lambda: ExponentialLabelerNode(),
+        marks=pytest.mark.xfail(raises=ExponentialLabelerList.LabelError),
     ),
     pytest.param(
-        lambda: QuadraticLabelerListMixin(),
-        lambda: QuadraticLabelerNodeMixin(),
+        lambda: QuadraticLabelerList(),
+        lambda: QuadraticLabelerNode(),
     ),
     pytest.param(
-        lambda: FastLabelerListMixin(),
-        lambda: FastLabelerNodeMixin(),
+        lambda: FastLabelerList(),
+        lambda: FastLabelerNode(),
     ),
 ], ids=['ExponentialLabeler', 'QuadraticLabeler', 'FastLabeler'])
 def test_labeler(lst_fn, node_fn):

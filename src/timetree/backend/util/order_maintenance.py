@@ -1,10 +1,24 @@
 from .linked_list import LinkedList
 from .linked_list import LinkedNode
-from .linked_list import SizeTrackingListMixin
-from .linked_list import SizeTrackingNodeMixin
+from .linked_list import SizeTrackingList
+from .linked_list import SizeTrackingNode
 
 
-class QuadraticLabelerNodeMixin(LinkedNode):
+class LabelerNode(LinkedNode):
+    def __lt__(self, other):
+        return self.label < other.label
+
+    def __gt__(self, other):
+        return self.label > other.label
+
+    def __le__(self, other):
+        return self.label <= other.label
+
+    def __ge__(self, other):
+        return self.label >= other.label
+
+
+class QuadraticLabelerNode(LabelerNode):
     __slots__ = ('label',)
 
     def __init__(self, *args, **kwargs):
@@ -27,7 +41,7 @@ class QuadraticLabelerNodeMixin(LinkedNode):
         if prev.is_head:
             min_label = 1
         else:
-            assert isinstance(prev, QuadraticLabelerNodeMixin)
+            assert isinstance(prev, QuadraticLabelerNode)
             min_label = prev.label + 1
         max_label = min_label
 
@@ -70,11 +84,11 @@ class QuadraticLabelerNodeMixin(LinkedNode):
         self.label = None
 
 
-class QuadraticLabelerListMixin(LinkedList):
+class QuadraticLabelerList(LinkedList):
     __slots__ = ()
 
 
-class ExponentialLabelerNodeMixin(LinkedNode):
+class ExponentialLabelerNode(LabelerNode):
     __slots__ = ('label',)
 
     def __init__(self, *args, **kwargs):
@@ -93,7 +107,7 @@ class ExponentialLabelerNodeMixin(LinkedNode):
         assert prev_label < next_label
 
         if next_label - prev_label == 1:
-            raise ExponentialLabelerNodeMixin.LabelError('Out of labels')
+            raise ExponentialLabelerNode.LabelError('Out of labels')
 
         # The label is the mean
         self.label = (prev_label + next_label) // 2
@@ -103,23 +117,24 @@ class ExponentialLabelerNodeMixin(LinkedNode):
         self.label = None
 
 
-class ExponentialLabelerListMixin(LinkedList):
+class ExponentialLabelerList(LinkedList):
     __slots__ = ('capacity',)
+
+    LabelError = ExponentialLabelerNode.LabelError
 
     def __init__(self, *args, capacity, **kwargs):
         super().__init__(*args, **kwargs)
         self.capacity = capacity
 
 
-class FastLabelerNodeMixin(SizeTrackingNodeMixin):
+class FastLabelerNode(SizeTrackingNode, LabelerNode):
     __slots__ = ('lower',)
 
-    class LowerNode(ExponentialLabelerNodeMixin):
-        __slots__ = ('node', 'upper',)
+    class LowerNode(ExponentialLabelerNode):
+        __slots__ = ('upper',)
 
-        def __init__(self, node, *args, **kwargs):
+        def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.node = node
             self.upper = None
 
         def insert_self(self, prev):
@@ -130,7 +145,7 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
             super().remove_self()
             self.upper = None
 
-    class LowerList(ExponentialLabelerListMixin):
+    class LowerList(ExponentialLabelerList):
         __slots__ = ('upper',)
 
         def __init__(self, upper, *args, **kwargs):
@@ -138,25 +153,25 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
             self.upper = upper
             upper.lower_list = self
 
-    class UpperNode(QuadraticLabelerNodeMixin):
+    class UpperNode(QuadraticLabelerNode):
         __slots__ = ('lower_list')
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.lower_list = None
 
-    class UpperList(QuadraticLabelerListMixin):
+    class UpperList(QuadraticLabelerList):
         __slots__ = ()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.lower = FastLabelerNodeMixin.LowerNode(self)
+        self.lower = FastLabelerNode.LowerNode()
 
     def insert_self(self, prev):
         super().insert_self(prev)
         try:
             self.lower.insert_self(prev.lower)
-        except ExponentialLabelerNodeMixin.LabelError:
+        except ExponentialLabelerNode.LabelError:
             # We have to reflow things, so grab the list of lowers
             cur_upper = self.lower.upper
             cur_lower = cur_upper.lower_list
@@ -178,10 +193,10 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
             for node in nodes:
                 if cur_size == new_size:
                     # Prepare a new upper node
-                    new_upper = FastLabelerNodeMixin.UpperNode()
+                    new_upper = FastLabelerNode.UpperNode()
                     new_upper.insert_self(cur_upper)
                     cur_upper = new_upper
-                    cur_lower = FastLabelerNodeMixin.LowerList(cur_upper, capacity=new_capacity)
+                    cur_lower = FastLabelerNode.LowerList(cur_upper, capacity=new_capacity)
                     cur_size = 0
                 node.insert_self(cur_lower)
                 cur_lower = node
@@ -209,12 +224,12 @@ class FastLabelerNodeMixin(SizeTrackingNodeMixin):
         return self.label >= other.label
 
 
-class FastLabelerListMixin(SizeTrackingListMixin):
+class FastLabelerList(SizeTrackingList):
     __slots__ = ('lower',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        upper = FastLabelerNodeMixin.UpperList()
-        upper_node = FastLabelerNodeMixin.UpperNode()
+        upper = FastLabelerNode.UpperList()
+        upper_node = FastLabelerNode.UpperNode()
         upper.prepend(upper_node)
-        self.lower = FastLabelerNodeMixin.LowerList(upper_node, capacity=5)
+        self.lower = FastLabelerNode.LowerList(upper_node, capacity=5)

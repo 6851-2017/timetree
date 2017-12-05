@@ -105,7 +105,7 @@ class LinkedListReverseIterator:
         return result
 
 
-class HeadTrackingNodeMixin(LinkedNode):
+class HeadTrackingNode(LinkedNode):
     __slots__ = ('head',)
 
     def __init__(self, *args, **kwargs):
@@ -121,7 +121,7 @@ class HeadTrackingNodeMixin(LinkedNode):
         self.head = None
 
 
-class HeadTrackingListMixin(LinkedList):
+class HeadTrackingList(LinkedList):
     __slots__ = ('head',)
 
     def __init__(self, *args, **kwargs):
@@ -129,7 +129,7 @@ class HeadTrackingListMixin(LinkedList):
         self.head = self
 
 
-class SizeTrackingNodeMixin(HeadTrackingNodeMixin):
+class SizeTrackingNode(HeadTrackingNode):
     __slots__ = ()
 
     def insert_self(self, prev):
@@ -145,7 +145,7 @@ class SizeTrackingNodeMixin(HeadTrackingNodeMixin):
         return self.head.size
 
 
-class SizeTrackingListMixin(HeadTrackingListMixin):
+class SizeTrackingList(HeadTrackingList):
     __slots__ = ('size',)
 
     def __init__(self, *args, **kwargs):
