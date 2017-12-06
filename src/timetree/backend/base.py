@@ -1,5 +1,6 @@
 from abc import ABCMeta
 from abc import abstractmethod
+from collections import defaultdict
 
 __all__ = ['BaseBackend', 'BaseVersion', 'BaseVnode']
 
@@ -122,8 +123,8 @@ class BaseBackend(metaclass=ABCMeta):
 
         If vnodes is empty, then create a new branch based off of the base commit.
 
-        :param vnodes: Vnodes which we would like references to; must all be
-        bound to commits
+        :param vnodes: Vnodes which we would like references to; uncommitted
+        ones are committed
         :return: Reference to the new head, and if vnodes is given, a list of
         `vnodes` rebound to it
         """
@@ -133,7 +134,22 @@ class BaseBackend(metaclass=ABCMeta):
             return self._branch([])[0]
         else:
             vnodes = list(vnodes)
-            return self._branch(vnodes)
+
+            committed_vnodes = [None] * len(vnodes)
+
+            heads_by_version = defaultdict(list)
+            for i, vnode in enumerate(vnodes):
+                if vnode.version.is_head:
+                    heads_by_version[vnode.version].append((i, vnode))
+                else:
+                    committed_vnodes[i] = vnode
+
+            for version, heads in heads_by_version.items():
+                _, commits = self.commit(vnode for i, vnode in heads)
+                for (i, old_vnode), new_vnode in zip(heads, commits):
+                    committed_vnodes[i] = new_vnode
+
+            return self._branch(committed_vnodes)
 
     @abstractmethod
     def _branch(self, vnodes):
