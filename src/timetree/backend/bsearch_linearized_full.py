@@ -1,12 +1,12 @@
-from .base_dnode import BsearchDnode
 from .base_linearized_full import BaseLinearizedDnodeBackedVnode
 from .base_linearized_full import BaseLinearizedFullBackend
+from .bsearch_partial import BsearchPartialDnode
 
 
 class BsearchLinearizedFullVnode(BaseLinearizedDnodeBackedVnode):
     __slots__ = ()
 
-    dnode_cls = BsearchDnode
+    dnode_cls = BsearchPartialDnode
 
 
 class BsearchLinearizedFullBackend(BaseLinearizedFullBackend):

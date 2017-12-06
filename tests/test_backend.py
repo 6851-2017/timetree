@@ -124,6 +124,25 @@ def test_partial_backend_keyerror(backend):
         commits[2].get('val')
 
 
+@pytest.mark.persistence_full
+def test_full_backend(backend):
+    head = backend.branch()
+    vnode = head.new_node()
+    vnode.set('f', 5)
+    assert vnode.get('f') == 5
+    # test commit
+    commit, [old_vnode] = backend.commit([vnode])
+    vnode.set('f', 8)
+    assert vnode.get('f') == 8
+    assert old_vnode.get('f') == 5
+    # test full
+    head2, [vnode2] = backend.branch([old_vnode])
+    vnode2.set('f', 9)
+    assert vnode.get('f') == 8
+    assert old_vnode.get('f') == 5
+    assert vnode2.get('f') == 9
+
+
 @pytest.mark.persistence_confluent
 def test_confluent_backend(backend):
     head = backend.branch()

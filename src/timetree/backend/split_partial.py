@@ -1,12 +1,12 @@
 import weakref
 
 from .base_dnode import BaseDnodeBackedVnode
-from .base_dnode import BsearchDnode
 from .base_partial import BasePartialBackend
 from .base_partial import BasePartialVersion
+from .bsearch_partial import BsearchPartialDnode
 
 
-class SplitPartialDnode(BsearchDnode):
+class SplitPartialDnode(BsearchPartialDnode):
     __slots__ = ('_field_backrefs', '_vnode_backrefs', '__weakref__')
 
     def __init__(self):

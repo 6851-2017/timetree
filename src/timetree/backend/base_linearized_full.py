@@ -3,8 +3,8 @@ from abc import ABCMeta
 from .base import BaseVersion
 from .base import BaseVnode
 from .base_dnode import BaseDnodeBackedVnode
-from .base_partial import BaseCopyableVnode
-from .base_partial import BaseDivergentBackend
+from .base_util import BaseCopyableVnode
+from .base_util import BaseDivergentBackend
 from .util.order_maintenance import FastLabelerList
 from .util.order_maintenance import FastLabelerNode
 
