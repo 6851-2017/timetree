@@ -5,7 +5,10 @@ from .base_util import BaseCopyableVnode
 
 
 class BaseDnode(metaclass=ABCMeta):
-    __slots__ = ()
+    __slots__ = ('backend',)
+
+    def __init__(self, backend):
+        self.backend = backend
 
     @abstractmethod
     def get(self, field, version_num):
@@ -33,7 +36,7 @@ class BaseDnodeBackedVnode(BaseCopyableVnode):
             self.dnode = dnode
             return
 
-        self.dnode = self.dnode_cls()
+        self.dnode = self.dnode_cls(self.backend)
 
     def get(self, field):
         super().get(field)

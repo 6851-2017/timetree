@@ -9,8 +9,8 @@ from .bsearch_partial import BsearchPartialDnode
 class SplitPartialDnode(BsearchPartialDnode):
     __slots__ = ('_field_backrefs', '_vnode_backrefs', '__weakref__')
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, backend):
+        super().__init__(backend)
         self._field_backrefs = weakref.WeakKeyDictionary()  # This should be a weak key default dict
         self._vnode_backrefs = weakref.WeakSet()
 
@@ -31,7 +31,7 @@ class SplitPartialDnode(BsearchPartialDnode):
         # split if necessary
         if len(self.mods_dict[field]) > 64:  # TODO: better split condition
             # print('split', self, field, self.mods_dict['val'][-1])
-            new_dnode = SplitPartialDnode()
+            new_dnode = SplitPartialDnode(backend=self.backend)
 
             # The order of these 3 loops is extremely important. I think I got it right this time, but I'm not 100% sure.
 

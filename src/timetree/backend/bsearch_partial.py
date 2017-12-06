@@ -13,7 +13,8 @@ class BsearchPartialDnode(BaseDnode):
 
     _deleted_marker = object()
 
-    def __init__(self):
+    def __init__(self, backend):
+        super().__init__(backend)
         self.mods_dict = defaultdict(list)
 
     def get(self, field, version_num):
