@@ -18,7 +18,7 @@ class Mod:
 
 
 class SplitLinearizedFullDnode(BaseDnode):
-    __slots__ = ('start_version', 'end_version', 'mods_dict', 'backrefs', )
+    __slots__ = ('start_version', 'end_version', 'mods_dict', 'backrefs', 'vnodes',)
 
     _deleted_marker = object()
 
@@ -28,6 +28,7 @@ class SplitLinearizedFullDnode(BaseDnode):
         self.end_version = backend.v_inf
         self.mods_dict = {}
         self.backrefs = WeakSet()
+        self.vnodes = WeakSet()
 
     def get(self, field, version_num):
         if not self.start_version <= version_num < self.end_version:
@@ -176,9 +177,9 @@ class SplitLinearizedFullDnode(BaseDnode):
 
         new_dnode = SplitLinearizedFullDnode(backend=self.backend)
 
-        self.end_version = split_point
-        new_dnode.start_version = split_point
         new_dnode.end_version = self.end_version
+        new_dnode.start_version = split_point
+        self.end_version = split_point
 
         for field in self.mods_dict:
             mods = self.mods_dict[field]
@@ -241,6 +242,18 @@ class SplitLinearizedFullDnode(BaseDnode):
                 self.backrefs.add(mod)
                 new_dnode.backrefs.add(new_mod)
 
+        vnodes = self.vnodes
+        self.vnodes = WeakSet()
+
+        for vnode in vnodes:
+            assert vnode.dnode == self
+            assert self.start_version <= vnode.version.version_num < new_dnode.end_version
+            if vnode.version.version_num < split_point:
+                self.vnodes.add(vnode)
+            else:
+                vnode.dnode = new_dnode
+                new_dnode.vnodes.add(vnode)
+
         # Split again if necessary
         self._split(split_set)
         new_dnode._split(split_set)
@@ -252,9 +265,13 @@ class SplitLinearizedFullDnode(BaseDnode):
 
 
 class SplitLinearizedFullVnode(BaseDnodeBackedVnode):
-    __slots__ = ()
+    __slots__ = ('__weakref__')
 
     dnode_cls = SplitLinearizedFullDnode
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dnode.vnodes.add(self)
 
 
 class SplitLinearizedFullBackend(BaseLinearizedFullBackend):
