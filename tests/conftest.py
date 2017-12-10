@@ -16,6 +16,7 @@ backend_info = [
     (timetree.backend.BsearchPartialBackend, pytest.mark.persistence_partial),
     (timetree.backend.SplitPartialBackend, pytest.mark.persistence_partial),
     (timetree.backend.BsearchLinearizedFullBackend, pytest.mark.persistence_full),
+    (timetree.backend.SplitLinearizedFullBackend, pytest.mark.persistence_full),
 ]
 
 

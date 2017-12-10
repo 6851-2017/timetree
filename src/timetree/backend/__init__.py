@@ -12,6 +12,7 @@ from .bsearch_linearized_full import BsearchLinearizedFullBackend
 from .bsearch_partial import BsearchPartialBackend
 from .copy import CopyBackend
 from .nop import NopBackend
+from .split_linearized_full import SplitLinearizedFullBackend
 from .split_partial import SplitPartialBackend
 
 __all__ = [
@@ -20,5 +21,6 @@ __all__ = [
     'BsearchPartialBackend',
     'CopyBackend',
     'NopBackend',
+    'SplitLinearizedFullBackend',
     'SplitPartialBackend',
 ]
