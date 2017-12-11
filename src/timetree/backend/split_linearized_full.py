@@ -158,7 +158,7 @@ class SplitLinearizedFullDnode(BaseDnode):
         num_mods = sum(map(len, self.mods_dict.values()))
         if num_mods <= 20:
             return
-        if num_mods <= 2 * num_fields:
+        if num_mods <= 5 * num_fields:
             return
 
         split_points = {self.start_version, self.end_version}.union(
