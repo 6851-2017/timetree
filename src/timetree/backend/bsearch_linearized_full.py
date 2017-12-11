@@ -43,6 +43,9 @@ class BsearchLinearizedFullDnode(BaseDnode):
             if mi == -1:
                 raise KeyError('Not created yet')
 
+            assert mi == -1 or mods[mi].version_num <= version_num
+            assert ma == len(mods) or mods[ma].version_num > version_num
+
             result = mods[mi].value
 
         if result is self._deleted_marker:
@@ -55,28 +58,30 @@ class BsearchLinearizedFullDnode(BaseDnode):
 
         new_mod = Mod(version_num, value)
         mods = self.mods_dict[field]
-        if not mods or mods[-1].version_num < version_num:
-            mods.append(new_mod)
-        else:
-            mi = -1
-            ma = len(mods)
-            while ma - mi > 1:
-                md = (mi + ma) // 2
-                if mods[md].version_num <= version_num:
-                    mi = md
-                else:
-                    ma = md
-            assert mi == -1 or mods[mi].version_num <= version_num
-            assert ma == len(mods) or mods[ma].version_num > version_num
-            assert ma == mi + 1
-            if ma == len(mods) or mods[ma].version_num > version_num.next:
-                prev_value = mods[mi].value if mi >= 0 else self._deleted_marker
-                succ_mod = Mod(version_num.next, prev_value)
-                mods.insert(ma, succ_mod)
-            if mi >= 0 and mods[mi].version_num == version_num:
-                mods[mi] = new_mod
+
+        mi = -1
+        ma = len(mods)
+        while ma - mi > 1:
+            md = (mi + ma) // 2
+            if mods[md].version_num <= version_num:
+                mi = md
             else:
-                mods.insert(ma, new_mod)
+                ma = md
+        assert mi == -1 or mods[mi].version_num <= version_num
+        assert ma == len(mods) or mods[ma].version_num > version_num
+        assert ma == mi + 1
+
+        if ma == len(mods) or mods[ma].version_num > version_num.next:
+            prev_value = mods[mi].value if mi >= 0 else self._deleted_marker
+            succ_mod = Mod(version_num.next, prev_value)
+            mods.insert(ma, succ_mod)
+
+        assert mods[ma].version_num == version_num.next
+
+        if mi >= 0 and mods[mi].version_num == version_num:
+            mods[mi] = new_mod
+        else:
+            mods.insert(ma, new_mod)
 
     def delete(self, field, version_num):
         super().delete(field, version_num)
