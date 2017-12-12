@@ -8,6 +8,7 @@ from timetree.backend.util.order_maintenance import FastLabelerList
 from timetree.backend.util.order_maintenance import FastLabelerNode
 from timetree.backend.util.order_maintenance import QuadraticLabelerList
 from timetree.backend.util.order_maintenance import QuadraticLabelerNode
+from timetree.backend.util.predecessor import SplayPredecessorDict
 
 
 @pytest.mark.parametrize("lst_fn,node_fn", [
@@ -54,3 +55,30 @@ def test_labeler(lst_fn, node_fn):
 
         labels = [node.label for node in lst]
         assert all(l1 < l2 for l1, l2 in zip(labels, labels[1:]))
+
+
+def test_predecessor():
+    dct = SplayPredecessorDict()
+
+    with pytest.raises(KeyError):
+        dct.get_pred(-1)
+    with pytest.raises(KeyError):
+        dct.get_pred(20)
+
+    dct.set(3, 'val 3')
+
+    with pytest.raises(KeyError):
+        dct.get_pred(-2)
+    assert dct.get_pred(3) == 'val 3'
+    assert dct.get_pred(5) == 'val 3'
+
+    dct.set(3, 'other val 3')
+    dct.set(5, 'val 5')
+    dct.set(-1, 'val 2')
+
+    assert dct.get_pred(3) == 'other val 3'
+    assert dct.get_pred(4) == 'other val 3'
+    assert dct.get_pred(5) == 'val 5'
+    assert dct.get_pred(-1) == 'val 2'
+    with pytest.raises(KeyError):
+        dct.get_pred(-2)
