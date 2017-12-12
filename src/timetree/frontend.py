@@ -4,24 +4,41 @@ from functools import wraps
 
 from .backend.base import BaseVersion
 
-__all__ = ['use_version', 'make_persistent', 'branch', 'commit']
+__all__ = [
+    'use_version',
+    'use_backend',
+    'use_proxy_version',
+    'make_persistent',
+    'get_proxy_version',
+    'get_proxy_backend',
+    'branch', 'commit',
+]
 
-global_version = None
+_global_version = None
 
 
+# Version-setting context managers
 @contextlib.contextmanager
 def use_version(version):
-    global global_version
+    global _global_version
 
-    if isinstance(version, BaseVersion):
+    if not isinstance(version, BaseVersion):
         raise TypeError('not a valid Version')
 
-    old_version = global_version
-    global_version = version
+    old_version = _global_version
+    _global_version = version
 
     yield
 
-    global_version = old_version
+    _global_version = old_version
+
+
+def use_backend(backend):
+    return use_version(backend.branch())
+
+
+def use_proxy_version(proxy):
+    return use_version(get_proxy_version(proxy))
 
 
 # Marker class
@@ -38,13 +55,13 @@ def make_persistent(klass):
                     timetree_version=None,
                     timetree_backend=None,
                     **kwargs):
-            global global_version
+            global _global_version
 
             if \
                     timetree_vnode is not None or\
                     timetree_version is not None or\
                     timetree_backend is not None or\
-                    global_version is not None:
+                    _global_version is not None:
                 return super().__new__(cls, *args, **kwargs)
 
             return klass(*args, **kwargs)
@@ -62,8 +79,8 @@ def make_persistent(klass):
                 # Get the version
                 if timetree_backend is not None:
                     timetree_version = timetree_backend.branch()
-                elif global_version is not None:
-                    timetree_version = global_version
+                elif _global_version is not None:
+                    timetree_version = _global_version
                 else:
                     assert False, "No version to use; __new__ should check that"
 
@@ -78,7 +95,7 @@ def make_persistent(klass):
             try:
                 result = vnode.get(name)
                 if vnode.backend.is_vnode(result):
-                    result = get_proxy(result)
+                    result = _proxy_to_vnode(result)
                 return result
             except KeyError:
                 result = super().__getattribute__(name)
@@ -128,22 +145,23 @@ def make_persistent(klass):
     return KlassTimetreeProxy
 
 
-def get_proxy(vnode):
+def _proxy_to_vnode(vnode):
     return vnode.get('_timetree_proxy_class')(timetree_vnode=vnode)
 
 
-def get_vnode(proxy):
+def _vnode_to_proxy(proxy):
     if not isinstance(proxy, TimetreeProxy):
         raise TypeError("proxy is not a TimetreeProxy")
     return object.__getattribute__(proxy, '_timetree_vnode')
 
 
-def get_version(proxy):
-    return get_vnode(proxy).version
+# Access the version or the backend
+def get_proxy_version(proxy):
+    return _vnode_to_proxy(proxy).version
 
 
-def get_backend(proxy):
-    return get_vnode(proxy).backend
+def get_proxy_backend(proxy):
+    return _vnode_to_proxy(proxy).backend
 
 
 def branch(*args):
@@ -182,10 +200,12 @@ def commit(*args):
 
 def _create_version(args, *, is_branch=False, is_commit=False):
     """ Internal implementation of branch and commit """
+    global _global_version
+
     assert int(is_branch) + int(is_commit) == 1,\
         "Exactly one of is_branch and is_commit should be true"
 
-    backend = get_backend(args[0]) if args else global_version.backend
+    backend = get_proxy_backend(args[0]) if args else _global_version.backend
     make_version = backend.branch if is_branch else backend.commit
 
     if not args:
@@ -200,8 +220,8 @@ def _create_version(args, *, is_branch=False, is_commit=False):
     else:
         is_iterator = False
 
-    _, vnodes = make_version(get_vnode(proxy) for proxy in args)
-    vnodes = (get_proxy(vnode) for vnode in vnodes)
+    _, vnodes = make_version(_vnode_to_proxy(proxy) for proxy in args)
+    vnodes = (_proxy_to_vnode(vnode) for vnode in vnodes)
     if is_iterator:
         return list(vnodes)
     elif len(args) == 1:
