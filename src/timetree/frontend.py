@@ -129,7 +129,7 @@ def make_persistent(klass):
 
 
 def get_proxy(vnode):
-    return vnode.get('_timetree_proxy_class')(_timetree_vnode=vnode)
+    return vnode.get('_timetree_proxy_class')(timetree_vnode=vnode)
 
 
 def get_vnode(proxy):
