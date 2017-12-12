@@ -62,7 +62,7 @@ def test_partial_backend_chain_split(backend):
     vnode_d = head.new_node()
 
     commits = []
-    for i in range(1000):
+    for i in range(500):
         vnode_a.set('val', ('a', i))
         vnode_b.set('val', ('b', i))
         vnode_c.set('val', ('c', i))
@@ -85,7 +85,7 @@ def test_partial_backend_chain_split(backend):
         vnode_d.set('d', vnode_d)
         commits.append(backend.commit([vnode_a, vnode_b, vnode_c, vnode_d])[1])
 
-    for i in range(1000):
+    for i in range(500):
         vnode_a, vnode_b, vnode_c, vnode_d = commits[i]
         assert vnode_a.get('val') == ('a', i)
         assert vnode_b.get('val') == ('b', i)
@@ -107,7 +107,7 @@ def test_full_backend_binary_tree_split(backend):
     vnode_d = head.new_node()
 
     branches = [(vnode_a, vnode_b, vnode_c, vnode_d)]
-    for i in range(1000):
+    for i in range(200):
         vnode_a, vnode_b, vnode_c, vnode_d = backend.branch(branches[i // 2])[1]
         vnode_a.set('val', ('a', i))
         vnode_b.set('val', ('b', i))
@@ -131,7 +131,7 @@ def test_full_backend_binary_tree_split(backend):
         vnode_d.set('d', vnode_d)
         branches.append((vnode_a, vnode_b, vnode_c, vnode_d))
 
-    for i in range(1000):
+    for i in range(200):
         vnode_a, vnode_b, vnode_c, vnode_d = branches[i+1]
         assert vnode_a.get('val') == ('a', i)
         assert vnode_b.get('val') == ('b', i)
