@@ -1,6 +1,7 @@
 import contextlib
 import types
 from functools import wraps
+from weakref import WeakValueDictionary
 
 from .backend.base import BaseVersion
 
@@ -62,7 +63,7 @@ def make_persistent(klass):
                     timetree_version is not None or\
                     timetree_backend is not None or\
                     _global_version is not None:
-                return super().__new__(cls, *args, **kwargs)
+                return object.__new__(cls)
 
             return klass(*args, **kwargs)
 
@@ -73,6 +74,10 @@ def make_persistent(klass):
                      **kwargs):
             if timetree_vnode is not None:
                 object.__setattr__(self, '_timetree_vnode', timetree_vnode)
+                version = timetree_vnode.version
+                proxy_set = timetree_vnode.get('_timetree_proxy_set')
+                assert version not in proxy_set
+                proxy_set[version] = self
                 return
 
             if timetree_version is None:
@@ -87,6 +92,9 @@ def make_persistent(klass):
             vnode = timetree_version.new_node()
             object.__setattr__(self, '_timetree_vnode', vnode)
             vnode.set('_timetree_proxy_class', self.__class__)
+            vnode.set('_timetree_proxy_set', WeakValueDictionary({
+                timetree_version: self,
+            }))
 
             super().__init__(*args, **kwargs)
 
@@ -95,7 +103,7 @@ def make_persistent(klass):
             try:
                 result = vnode.get(name)
                 if vnode.backend.is_vnode(result):
-                    result = _proxy_to_vnode(result)
+                    result = _vnode_to_proxy(result)
                 return result
             except KeyError:
                 result = super().__getattribute__(name)
@@ -103,14 +111,15 @@ def make_persistent(klass):
                 # Wrap instance methods
                 if isinstance(result, types.MethodType) \
                         and result.__self__ is self:
+                    fn = result
                     version = vnode.version
 
-                    @wraps(result)
-                    def wrapped_result():
+                    @wraps(fn)
+                    def wrapped_fn(*args, **kwargs):
                         with use_version(version):
-                            return result()
+                            return fn(*args, **kwargs)
 
-                    result = wrapped_result
+                    result = wrapped_fn
                 return result
 
         def __setattr__(self, name, value):
@@ -142,14 +151,19 @@ def make_persistent(klass):
 
             return vnode.delete(name)
 
+    KlassTimetreeProxy.__name__ = klass.__name__ + 'TimetreeProxy'
+
     return KlassTimetreeProxy
 
 
-def _proxy_to_vnode(vnode):
+def _vnode_to_proxy(vnode):
+    result = vnode.get('_timetree_proxy_set').get(vnode.version, None)
+    if result is not None:
+        return result
     return vnode.get('_timetree_proxy_class')(timetree_vnode=vnode)
 
 
-def _vnode_to_proxy(proxy):
+def _proxy_to_vnode(proxy):
     if not isinstance(proxy, TimetreeProxy):
         raise TypeError("proxy is not a TimetreeProxy")
     return object.__getattribute__(proxy, '_timetree_vnode')
@@ -157,11 +171,11 @@ def _vnode_to_proxy(proxy):
 
 # Access the version or the backend
 def get_proxy_version(proxy):
-    return _vnode_to_proxy(proxy).version
+    return _proxy_to_vnode(proxy).version
 
 
 def get_proxy_backend(proxy):
-    return _vnode_to_proxy(proxy).backend
+    return _proxy_to_vnode(proxy).backend
 
 
 def branch(*args):
@@ -220,8 +234,8 @@ def _create_version(args, *, is_branch=False, is_commit=False):
     else:
         is_iterator = False
 
-    _, vnodes = make_version(_vnode_to_proxy(proxy) for proxy in args)
-    vnodes = (_proxy_to_vnode(vnode) for vnode in vnodes)
+    _, vnodes = make_version(_proxy_to_vnode(proxy) for proxy in args)
+    vnodes = (_vnode_to_proxy(vnode) for vnode in vnodes)
     if is_iterator:
         return list(vnodes)
     elif len(args) == 1:

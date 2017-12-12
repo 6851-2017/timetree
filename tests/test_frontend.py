@@ -17,10 +17,10 @@ def test_frontend_wrapper(backend):
     a.b.foo = 2
     assert a.foo == 1
     assert a.b.foo == 2
-    assert timetree.frontend._vnode_to_proxy(a).get('foo') == 1
-    assert timetree.frontend._vnode_to_proxy(a.b).get('foo') == 2
-    timetree.frontend._vnode_to_proxy(a).set('bar', 2)
-    timetree.frontend._vnode_to_proxy(a.b).set('bar', 3)
+    assert timetree.frontend._proxy_to_vnode(a).get('foo') == 1
+    assert timetree.frontend._proxy_to_vnode(a.b).get('foo') == 2
+    timetree.frontend._proxy_to_vnode(a).set('bar', 2)
+    timetree.frontend._proxy_to_vnode(a.b).set('bar', 3)
     assert a.bar == 2
     assert a.b.bar == 3
 
