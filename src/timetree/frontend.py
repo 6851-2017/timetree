@@ -96,7 +96,8 @@ def make_persistent(klass):
                 timetree_version: self,
             }))
 
-            super().__init__(*args, **kwargs)
+            with use_version(vnode.version):
+                super().__init__(*args, **kwargs)
 
         def __getattribute__(self, name):
             vnode = object.__getattribute__(self, '_timetree_vnode')
