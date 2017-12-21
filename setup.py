@@ -24,7 +24,7 @@ def read(*names, **kwargs):
 
 setup(
     name='timetree',
-    version='0.1.0',
+    version='0.1.1',
     license='MIT license',
     description='General transformation to make python objects persistent',
     long_description='%s\n%s' % (
