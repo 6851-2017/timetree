@@ -1,6 +1,5 @@
-
-from timetree import main
+import timetree
 
 
 def test_main():
-    pass
+    dir(timetree)
