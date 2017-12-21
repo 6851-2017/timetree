@@ -10,7 +10,7 @@ Overview
     * - docs
       - |docs|
     * - tests
-      - |
+      - | |travis|
         | |codecov|
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
@@ -19,6 +19,10 @@ Overview
 .. |docs| image:: https://readthedocs.org/projects/timetree/badge/?style=flat
     :target: https://readthedocs.org/projects/timetree
     :alt: Documentation Status
+
+.. |travis| image:: https://travis-ci.org/6851-2017/timetree.svg?branch=master
+    :alt: Travis-CI Build Status
+    :target: https://travis-ci.org/6851-2017/timetree
 
 .. |codecov| image:: https://codecov.io/github/6851-2017/timetree/coverage.svg?branch=master
     :alt: Coverage Status
